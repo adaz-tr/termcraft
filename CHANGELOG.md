@@ -1,103 +1,77 @@
 # Changelog
 
 All notable changes to this project are documented here.
-Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
+Format loosely follows [Keep a Changelog](https://keepachangelog.com/),
+and versions follow [Semantic Versioning](https://semver.org/).
 
 ## [1.0.0] — 2026-09-04
 
-First public release. This entry also records the hardening pass done before publishing.
+First release.
 
-### Fixed — config-destroying bugs
+### Themes
 
-- **`doctor --fix` wiped your setup.** `auto_fix()` called `inject_block()` with an env-only
-  script, and since that method replaces the whole marked block, every alias and the prompt hook
-  were deleted. It now goes through `sync_all_shells(extra_env=...)`, which regenerates the block
-  in full.
-- **WezTerm configs were left unparseable.** The theme block was appended after the file's final
-  `return config`, which is a Lua syntax error. Colors now live in a sidecar
-  `termcraft_colors.lua` and the hook is inserted *before* the last top-level `return`.
-- **Alacritty configs were left unparseable.** Appending `[colors.primary]` to a file that already
-  had one produced a TOML "duplicate table" error. Existing `[colors.*]` tables are now stripped
-  before the block is written, and `.yml` configs are no longer targeted with TOML content.
-- **`ls`, `cat`, `cd`, `grep` and `find` could break your shell.** The `modern-replacements` bundle
-  was seeded by default and installed regardless of whether `eza`/`bat`/`zoxide`/`rg`/`fd` existed.
-  It is now opt-in, each alias declares the binary it `requires`, and aliases whose tool is missing
-  are skipped during sync.
-- **No backups were taken.** The `auto_backup` setting existed but was never read. Theme and prompt
-  application now snapshot shell, terminal and prompt configs first, and `backup restore` takes a
-  `pre-restore` snapshot before overwriting anything.
-- **A single YAML typo deleted your config.** A malformed `config.yaml` was silently overwritten
-  with defaults. It is now copied to `config.broken-<timestamp>.yaml` and the CLI says where.
+- 23 built-in palettes, including 8 with 24-bit RGB gradients.
+- One command applies a theme to Windows Terminal, Alacritty, WezTerm and Kitty **and** to your
+  shell tools (`bat` syntax theme, `fzf` colors) at the same time.
+- Custom themes: drop a JSON or YAML file into `~/.termcraft/themes/` and it shows up in
+  `termcraft theme list`.
+- Live preview in both the CLI (`theme preview`) and the studio.
 
-### Fixed — behaviour
+### Prompts
 
-- `backup restore` printed a stray empty `Error:` line on failure (`typer.Exit` subclasses
-  `RuntimeError` and was caught by the surrounding `except Exception`).
-- Theme names were stored unnormalized, so `theme apply "Tokyo Night"` later fell back to default
-  colors on the next sync. Names now resolve to a canonical key before being saved.
-- The NuShell prompt hook re-ran `starship init nu | save -f` on **every** shell start. It is now
-  guarded so it only generates the autoload file once.
-- `benchmark` reported an installed shell as "Not Found" if the first iteration timed out. It now
-  keeps going and reports `timeout` separately. A warm-up pass was added so the first run no longer
-  skews the average.
-- `rival-gradient` was a byte-for-byte duplicate of `cyber-gradient`, down to the display name. It
-  now has its own magenta→teal palette and is registered in the gradient and `bat` maps.
-- Every built-in theme now has a `bat` theme mapping; previously 7 of them silently fell back to
-  `ansi`.
-- Alias names are validated — a name with spaces or shell metacharacters is rejected instead of
-  being written into `.bashrc` verbatim.
-- Doctor now warns about aliases that shadow core commands. The previous check explicitly excluded
-  exactly the dangerous ones.
-- `prompt apply` picks the engine from the preset instead of trusting a possibly-misspelled
-  `--engine`; `prompt preview` exits non-zero for an unknown preset.
-- Windows Terminal: a theme without a `name` key no longer raises `KeyError`.
-- `psutil.cpu_percent()` is called with an interval, so the banner no longer always shows 0%.
-- Snapshots sort by their manifest timestamp instead of directory name (which sorted by tag first).
-- Output is no longer forced to ANSI when stdout is a pipe.
-- Unix font scanning recurses into subdirectories.
-- Fish alias escaping: fish expands `$` inside double quotes, so `alias h "echo $HOME"` was frozen
-  at definition time instead of expanding at call time the way the bash version does. `\`, `"` and
-  `$` are now escaped.
-- Removed three comment blocks that still described already-fixed bugs (the rival-gradient
-  duplicate, missing backups in `inject_block`, and the version living in three places).
+- Starship and Oh-My-Posh presets, written straight to the right config path.
+- The engine is derived from the preset, so a misspelled `--engine` cannot apply the wrong one.
 
-### Added
+### Aliases
 
-- **The studio now wears the theme you select.** Picking a palette recolors the whole TUI, not
-  just the preview card, by building a Textual `Theme` from the palette so built-in widgets
-  (tabs, footer, dropdowns) follow too. Light palettes like `catppuccin-latte` used to leave the
-  tab labels and footer unreadable.
-- `ensure_contrast()` / `contrast_ratio()` colour utilities — accent colours are shifted until
-  they clear a WCAG threshold against the panel behind them, with a test asserting every built-in
-  theme stays readable as UI chrome.
-- `scripts/make_screenshots.py` — generates the README screenshots via Textual's SVG export in a
-  throwaway `HOME`.
-- README screenshots of the studio (dark + light themes, doctor, tools, Turkish UI).
+- Define once, synchronize to PowerShell, Bash, Zsh, Fish and NuShell, each with correct quoting
+  for that shell.
+- Bundled packs for Git, Docker and dev tooling, plus an opt-in `modern-replacements` pack.
+- Aliases can declare the binary they need (`--requires`); if the tool is not installed the alias
+  is skipped rather than shadowing a core command with something that does not exist.
+- Alias names are validated before they reach a shell profile.
 
-- `termcraft uninstall` — removes the TermCraft block from every shell profile.
-- `--requires` flag on `alias add`.
-- `--exec-policy` flag on `doctor --fix`; changing PowerShell's ExecutionPolicy is now opt-in and
-  prompted for instead of happening silently.
-- Confirmation prompts before restoring a snapshot (CLI and TUI).
-- `tests/conftest.py` isolates `HOME` for every test and stubs `subprocess.run` — running `pytest`
-  no longer rewrites the developer's own shell profiles.
-- Regression tests for each of the config-destroying bugs above.
-- Ruff lint config and a CI lint job; CI also runs a packaged-CLI smoke test.
-- Comments throughout the codebase.
+### Studio (TUI)
 
-### Changed
+- Full-screen Textual dashboard: themes, prompts, aliases, doctor, benchmark, tools, backups,
+  language.
+- The studio recolors itself to match the selected theme, so you see a palette in place before
+  applying it. Accent colors are shifted until they clear a WCAG contrast threshold against the
+  panel behind them, so light palettes stay readable.
+- Diagnostics, tool scans, benchmarks and theme application run on background workers, so the UI
+  does not freeze.
 
-- TUI diagnostics, tool scan, benchmark and theme/prompt apply run on background workers, so the
-  interface no longer freezes. Added `q` (quit) and `r` (refresh) bindings.
-- All remaining hardcoded UI strings moved into the i18n table; a test enforces `tr`/`en` parity.
-- `bat` theme mapping and fzf color generation live in one place instead of being duplicated
-  between `sync.py` and `theme_engine.py`.
-- Version is read from a single source (`src/termcraft/__init__.py`) via `hatch.version`.
-- Release workflow: per-platform artifact names (all three builds previously produced the same
-  filename and overwrote each other), `contents: write` permission, `--collect-all textual`, a
-  binary smoke test, and wheel/sdist upload.
-- `git commit -m` shortcut renamed `gc` → `gcm`, `gp` → `gpush`, `gpl` → `gpull` to avoid colliding
-  with PowerShell's built-in `gc` (Get-Content) and `gp` (Get-ItemProperty) aliases.
-- Added `src/termcraft/utils/__init__.py`, which was missing.
-- README no longer advertises `pip install termcraft`; the package is not published to PyPI, so
-  that command would have failed. Standalone binaries and source install are documented instead.
+### Diagnostics & tooling
+
+- `termcraft doctor` checks TrueColor support, Nerd Fonts, broken and duplicate `PATH` entries,
+  UTF-8 readiness, alias shadowing, and missing alias requirements.
+- `termcraft benchmark` measures shell startup latency with a warm-up pass, and reports timeouts
+  distinctly from "not installed".
+- `termcraft tools list` detects `eza`, `bat`, `zoxide`, `ripgrep`, `fzf`, `fastfetch`, `lazygit`,
+  `fd`, Starship and Oh-My-Posh, and prints the install command for your OS.
+
+### Safety
+
+Everything TermCraft writes to a config file was built around not breaking what is already there:
+
+- All shell edits live between `# >>> termcraft initialize >>>` markers; your own lines are never
+  touched, and `termcraft uninstall` removes the block cleanly.
+- `auto_backup` snapshots your shell, terminal and prompt configs before any theme or prompt is
+  applied, and `backup restore` snapshots the current state before overwriting it.
+- WezTerm colors go to a sidecar `termcraft_colors.lua` and the hook is inserted *before* the
+  file's final `return`, because Lua requires `return` to be the last statement in a block.
+- Alacritty color tables are replaced rather than appended, because TOML rejects a duplicate
+  `[colors.*]` table.
+- An unreadable `config.yaml` is quarantined to `config.broken-<timestamp>.yaml` instead of being
+  silently replaced with defaults.
+- Changing PowerShell's ExecutionPolicy is opt-in and prompted for, never silent.
+
+### i18n
+
+- Full Türkçe and English across the CLI, diagnostics and studio, with a test enforcing key parity
+  between the two.
+
+### Notes
+
+- Not published to PyPI. Install from the standalone binaries attached to each release, or from
+  source.

@@ -24,7 +24,7 @@
 
 <img src="docs/images/studio-themes-rival.svg" alt="TermCraft Studio - Themes tab with the Rival Magenta Gradient theme" width="900">
 
-[Features](#-key-features) • [Installation](#-installation) • [Quick Start](#-quick-start) • [Studio](#-interactive-tui-studio) • [CLI Reference](#-cli-reference) • [Türkçe](#-türkçe-kullanım-rehberi)
+[Features](#-key-features) • [Installation](#-installation) • [Quick Start](#-quick-start) • [Activating](#-activating-it) • [Studio](#-interactive-tui-studio) • [CLI Reference](#-cli-reference) • [Türkçe](#-türkçe-kullanım-rehberi)
 
 ---
 
@@ -112,7 +112,56 @@ termcraft theme apply rival-gradient
 termcraft studio
 ```
 
-`termcraft init` is the one command that wires everything up — it writes the unified block (env vars + aliases + prompt hook) into every shell it detects. Open a new terminal tab afterwards.
+---
+
+## 🔌 Activating it
+
+`termcraft init` is the command that wires everything up. It writes one marked block — env vars, aliases and the prompt hook — into every shell profile it detects:
+
+| Shell | File it writes to |
+| :--- | :--- |
+| PowerShell | `$PROFILE` (both 5.1 and 7 if you have them) |
+| Bash | `~/.bashrc` |
+| Zsh | `~/.zshrc` |
+| Fish | `~/.config/fish/config.fish` |
+| NuShell | `config.nu` |
+
+**Nothing changes in your current window.** A shell only reads its profile at startup, so you need to either open a new terminal tab, or reload in place:
+
+```bash
+. $PROFILE            # PowerShell
+source ~/.bashrc      # Bash
+source ~/.zshrc       # Zsh
+source ~/.config/fish/config.fish   # Fish
+```
+
+Check it worked:
+
+```bash
+echo $env:TERMCRAFT_THEME   # PowerShell
+echo $TERMCRAFT_THEME       # Bash / Zsh / Fish
+```
+
+If that prints your theme name, the block is loading.
+
+### If something doesn't show up
+
+- **Prompt looks plain.** Starship and Oh-My-Posh are not bundled — install one (`termcraft tools list` gives you the command). Without either, TermCraft falls back to a simple built-in prompt so you are never left without one.
+- **Icons render as boxes.** You need a Nerd Font, and your terminal has to be set to use it. `termcraft doctor` tells you which ones you have.
+- **Nothing at all happens in PowerShell.** Your ExecutionPolicy is probably blocking the profile from loading. Check with `Get-ExecutionPolicy`; if it says `Restricted`, run `termcraft doctor --fix` and say yes when it offers, or set it yourself:
+  ```powershell
+  Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+  ```
+- **Colors look flat.** Your terminal may not support 24-bit color. `termcraft doctor` checks this.
+- **An alias is missing.** Aliases that declare a required tool are skipped when that tool is not installed — this is deliberate, so `ls` and `cd` never break. `termcraft doctor` lists which ones were skipped and why.
+
+### Undoing it
+
+```bash
+termcraft uninstall        # removes the block from every shell profile
+termcraft backup list      # snapshots taken before each change
+termcraft backup restore <snapshot>
+```
 
 ---
 
@@ -283,6 +332,10 @@ termcraft backup restore kurulumum
 <img src="docs/images/studio-themes-tr.svg" alt="TermCraft Studio Türkçe arayüz" width="900">
 
 Tüm çıktılar, tanı raporları ve TUI arayüzü Türkçe'ye çevrilidir. Dili değiştirdiğinizde alias açıklamaları da o dilde yeniden üretilir.
+
+**Kurulumdan sonra:** `termcraft init` ayarları kabuk profillerinize yazar ama **açık olan pencerede hiçbir şey değişmez** — kabuk profil dosyasını sadece açılışta okur. Yeni bir sekme açın ya da `. $PROFILE` (Bash'te `source ~/.bashrc`) çalıştırın. Çalıştığını `echo $env:TERMCRAFT_THEME` ile doğrulayabilirsiniz.
+
+PowerShell'de hiçbir şey olmuyorsa büyük ihtimalle ExecutionPolicy profili yüklemeyi engelliyordur; `Get-ExecutionPolicy` `Restricted` diyorsa `termcraft doctor --fix` çalıştırıp sorduğunda onay verin. Prompt sade görünüyorsa Starship veya Oh-My-Posh kurulu değildir (`termcraft tools list` kurulum komutunu verir) — ikisi de yoksa TermCraft kendi basit prompt'una düşer, promptsuz kalmazsınız.
 
 **Güvenlik notu:** TermCraft kabuk profillerinize yazarken sadece kendi işaretli bloğunu değiştirir, sizin satırlarınıza dokunmaz. Tema ve prompt uygulamadan önce otomatik yedek alır. `ls`, `cd`, `cat` gibi temel komutları ezen kısayollar varsayılan olarak kurulmaz; kurulsalar bile ilgili araç sisteminizde yoksa kabuk profiline yazılmaz.
 
