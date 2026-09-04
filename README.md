@@ -71,20 +71,25 @@ TermCraft edits files you care about, so it plays carefully:
 
 ## 🚀 Installation
 
-### Using pip
-```bash
-pip install termcraft
-```
+### Standalone binary — no Python needed
+Grab `termcraft-<platform>` for your OS from the [Releases](https://github.com/adaz-tr/termcraft/releases) page, drop it somewhere on your `PATH`, and run it.
+
+| Platform | File |
+| :--- | :--- |
+| Windows | `termcraft-windows-amd64.exe` |
+| Linux | `termcraft-linux-x86_64` |
+| macOS | `termcraft-macos-arm64` |
 
 ### From source
+Requires Python 3.10+.
+
 ```bash
 git clone https://github.com/adaz-tr/termcraft.git
 cd termcraft
 pip install -e .
 ```
 
-### Standalone binary
-Grab `termcraft-<platform>` from the [Releases](https://github.com/adaz-tr/termcraft/releases) page — no Python required.
+This gives you both the `termcraft` and `tc` commands.
 
 ---
 

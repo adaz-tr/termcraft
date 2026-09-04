@@ -99,3 +99,5 @@ First public release. This entry also records the hardening pass done before pub
 - `git commit -m` shortcut renamed `gc` → `gcm`, `gp` → `gpush`, `gpl` → `gpull` to avoid colliding
   with PowerShell's built-in `gc` (Get-Content) and `gp` (Get-ItemProperty) aliases.
 - Added `src/termcraft/utils/__init__.py`, which was missing.
+- README no longer advertises `pip install termcraft`; the package is not published to PyPI, so
+  that command would have failed. Standalone binaries and source install are documented instead.
