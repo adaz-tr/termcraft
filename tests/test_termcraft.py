@@ -26,7 +26,15 @@ from termcraft.adapters.terminals.base import BaseTerminalAdapter
 from termcraft.config import AliasDefinition
 from termcraft.i18n import STRINGS, t, set_language, get_current_language
 from termcraft.presets.themes import BUILTIN_THEMES, BAT_THEME_MAP, resolve_theme_key, get_bat_theme
-from termcraft.utils.gradient import get_gradient_palette, render_gradient_text
+from termcraft.utils.gradient import (
+    contrast_ratio,
+    ensure_contrast,
+    get_gradient_palette,
+    is_dark,
+    mix_hex,
+    readable_on,
+    render_gradient_text,
+)
 from termcraft.utils.font_detector import detect_nerd_fonts
 
 runner = CliRunner()
@@ -180,6 +188,51 @@ def test_gradient_engine():
     assert palette[0] == "#000000"
     assert palette[-1] == "#ffffff"
     assert render_gradient_text("TermCraft Studio", palette_key="cyber-gradient") is not None
+
+
+def test_color_helpers():
+    assert is_dark("#08090f") is True
+    assert is_dark("#eff1f5") is False
+    assert readable_on("#00ffff") == "#000000"
+    assert readable_on("#0a0a2a") == "#ffffff"
+    assert mix_hex("#000000", "#ffffff", 0.5) == "#7f7f7f"
+    assert contrast_ratio("#000000", "#ffffff") == pytest.approx(21.0, abs=0.1)
+
+
+def test_ensure_contrast_only_adjusts_when_needed():
+    """Acik temalarda aksan rengi panel uzerinde okunmuyordu."""
+    panel_light = mix_hex("#eff1f5", "#000000", 0.14)
+    teal = "#179299"
+    assert contrast_ratio(teal, panel_light) < 4.5
+    fixed = ensure_contrast(teal, panel_light, 4.5)
+    assert contrast_ratio(fixed, panel_light) >= 4.5
+
+    # zaten yeterliyse renge dokunulmamali
+    panel_dark = mix_hex("#08090f", "#ffffff", 0.14)
+    assert ensure_contrast("#00ffff", panel_dark, 4.5) == "#00ffff"
+
+
+def test_studio_ui_is_readable_for_every_builtin_theme():
+    """Her dahili tema icin stüdyonun kendi arayuzu okunur olmali.
+
+    TUI artik temayi takip ettigi icin acik temalar (catppuccin-latte) header
+    ve footer'i okunmaz hale getirebiliyordu.
+    """
+    from termcraft.tui.app import TermCraftStudioApp
+
+    app = TermCraftStudioApp()
+    for key, palette in BUILTIN_THEMES.items():
+        built = app._build_textual_theme(palette, f"t-{key}")
+        v = built.variables
+        assert contrast_ratio(v["tc-header-fg"], v["tc-panel"]) >= 4.4, key
+        assert contrast_ratio(v["tc-footer-fg"], v["tc-panel"]) >= 3.4, key
+        assert contrast_ratio(v["tc-fg"], v["tc-bg"]) >= 3.0, key
+        # buton yazilari kendi zeminlerinde okunmali
+        assert contrast_ratio(v["tc-on-cyan"], v["tc-cyan"]) >= 3.0, key
+        assert contrast_ratio(v["tc-on-green"], v["tc-green"]) >= 3.0, key
+        assert contrast_ratio(v["tc-on-red"], v["tc-red"]) >= 3.0, key
+        # acik tema koyu isaretlenmemeli
+        assert built.dark == is_dark(palette["background"]), key
 
 
 def test_theme_engine():

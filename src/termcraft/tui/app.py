@@ -3,6 +3,7 @@ from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import ModalScreen
 from textual.widgets import Header, Footer, Static, Button, TabbedContent, TabPane, Select, Input, DataTable, Label
 from textual.reactive import reactive
+from textual.theme import Theme
 from textual import work
 
 from termcraft.presets.themes import BUILTIN_THEMES
@@ -14,6 +15,7 @@ from termcraft.core.doctor import TerminalDoctor
 from termcraft.core.profiler import ShellProfiler
 from termcraft.core.tool_hub import ToolHub
 from termcraft.core.backup_sync import BackupManager
+from termcraft.utils.gradient import ensure_contrast, is_dark, mix_hex, readable_on
 from termcraft.i18n import t, set_language, get_current_language
 
 
@@ -27,8 +29,8 @@ class ConfirmScreen(ModalScreen[bool]):
     #confirm-box {
         width: 60;
         height: auto;
-        background: #111424;
-        border: round #ff0055;
+        background: $surface;
+        border: round $error;
         padding: 1 2;
     }
     """
@@ -51,21 +53,23 @@ class ConfirmScreen(ModalScreen[bool]):
 # textual tabanli tam ekran studio. CLI ile ayni core siniflarini kullaniyor,
 # burada sadece sunum katmani var
 class TermCraftStudioApp(App):
-    # TODO: renkler CSS'te sabit. tema secince TUI'nin kendi rengi degismiyor
+    # renkler aktif Textual Theme'inden geliyor (bkz. _build_textual_theme).
+    # tema secilince stüdyonun kendi arayuzu de o temaya donuyor - bir tema
+    # aracinin kendi penceresinin temayi yok saymasi tuhaf kaciyordu
     CSS = """
     Screen {
-        background: #08090f;
-        color: #c0caf5;
+        background: $tc-bg;
+        color: $tc-fg;
     }
 
     Header {
-        background: #111424;
-        color: #00ffff;
+        background: $tc-panel;
+        color: $tc-header-fg;
     }
 
     Footer {
-        background: #111424;
-        color: #a9b1d6;
+        background: $tc-panel;
+        color: $tc-footer-fg;
     }
 
     TabbedContent {
@@ -77,39 +81,39 @@ class TermCraftStudioApp(App):
     }
 
     .card {
-        background: #111424;
-        border: round #0099ff;
+        background: $tc-panel;
+        border: round $tc-blue;
         padding: 1;
         margin-bottom: 1;
     }
 
     .preview-box {
         height: 17;
-        border: solid #00ffff;
-        background: #06070a;
+        border: solid $tc-cyan;
+        background: $tc-inset;
         padding: 1;
         margin-top: 1;
     }
 
     .btn-apply {
-        background: #00d4ff;
-        color: #08090f;
+        background: $tc-cyan;
+        color: $tc-on-cyan;
         text-style: bold;
         margin-top: 1;
         margin-right: 1;
     }
 
     .btn-action {
-        background: #00ff99;
-        color: #08090f;
+        background: $tc-green;
+        color: $tc-on-green;
         text-style: bold;
         margin-top: 1;
         margin-right: 1;
     }
 
     .btn-danger {
-        background: #ff0055;
-        color: #ffffff;
+        background: $tc-red;
+        color: $tc-on-red;
         text-style: bold;
         margin-top: 1;
         margin-right: 1;
@@ -118,9 +122,9 @@ class TermCraftStudioApp(App):
     .input-field {
         margin-top: 1;
         margin-bottom: 1;
-        background: #06070a;
-        border: solid #0099ff;
-        color: #ffffff;
+        background: $tc-inset;
+        border: solid $tc-blue;
+        color: $tc-fg;
     }
     """
 
@@ -135,6 +139,80 @@ class TermCraftStudioApp(App):
     selected_theme = reactive("cyber-gradient")
     selected_prompt = reactive("modern-cyber")
 
+    # __init__ icinde _set_ui_theme cagrilana kadar gecerli bir palet dursun
+    _ui_theme = BUILTIN_THEMES["cyber-gradient"]
+
+    def _build_textual_theme(self, theme: dict, name: str) -> Theme:
+        """TermCraft palet sozlugunu Textual'in kendi Theme nesnesine cevirir.
+
+        Sadece kendi $tc-* degiskenlerimizi tanimlamak yetmiyordu: Tabs, Footer
+        ve Select gibi hazir widget'lar Textual'in kendi tasarim token'larini
+        ($surface, $panel, $text-muted ...) kullaniyor. Acik bir temada
+        (catppuccin-latte) sekme etiketleri ve footer okunmaz hale geliyordu.
+        Theme nesnesini kaydedince Textual butun bu token'lari kendisi turetiyor.
+        """
+        bg = theme.get("background", "#08090f")
+        fg = theme.get("foreground", "#c0caf5")
+        dark = is_dark(bg)
+
+        # koyu temada zemini biraz aydinlat, acik temada biraz koyulastir.
+        # dogrudan fg'ye karistirirsak panel temanin rengine bulaniyor
+        lift = "#ffffff" if dark else "#000000"
+        deep = "#000000" if dark else "#ffffff"
+
+        cyan = theme.get("cyan", "#00ffff")
+        green = theme.get("green", "#00ff99")
+        red = theme.get("red", "#ff0055")
+        surface = mix_hex(bg, lift, 0.08)
+        inset = mix_hex(bg, deep, 0.30)
+
+        return Theme(
+            name=name,
+            dark=dark,
+            background=bg,
+            foreground=fg,
+            surface=surface,
+            panel=mix_hex(bg, lift, 0.14),
+            primary=theme.get("blue", "#0099ff"),
+            secondary=cyan,
+            accent=theme.get("magenta", "#a800ff"),
+            success=green,
+            warning=theme.get("yellow", "#ffcc00"),
+            error=red,
+            # kendi siniflarimiz ($tc-*) bunlari kullaniyor
+            variables={
+                "tc-bg": bg,
+                "tc-fg": fg,
+                "tc-panel": surface,
+                "tc-inset": inset,
+                "tc-dim": mix_hex(fg, bg, 0.40),
+                # tema paletleri bizim panel zeminimiz dusunulerek yapilmiyor.
+                # acik temalarda aksan rengi panel uzerinde okunmuyordu, o yuzden
+                # tonu koruyup parlakligi kontrast esigine kadar kaydiriyoruz
+                "tc-header-fg": ensure_contrast(cyan, surface, 4.5),
+                "tc-footer-fg": ensure_contrast(mix_hex(fg, bg, 0.40), surface, 3.5),
+                "tc-cyan": cyan,
+                "tc-green": green,
+                "tc-red": red,
+                "tc-blue": theme.get("blue", "#0099ff"),
+                # buton yazisi zeminine gore siyah ya da beyaz olmali, yoksa
+                # acik renkli aksanlarda okunmuyor
+                "tc-on-cyan": readable_on(cyan),
+                "tc-on-green": readable_on(green),
+                "tc-on-red": readable_on(red),
+            },
+        )
+
+    def _set_ui_theme(self, theme_key: str) -> None:
+        """Stüdyonun kendi renklerini secili temaya cevirir."""
+        palette = self.theme_engine.get_theme(theme_key)
+        if not palette:
+            return
+        self._ui_theme = palette
+        textual_name = f"termcraft-{theme_key}"
+        self.register_theme(self._build_textual_theme(palette, textual_name))
+        self.theme = textual_name
+
     def __init__(self):
         super().__init__()
         # motorlari burada kuruyoruz. on_mount'ta olusturmak riskliydi: Select
@@ -147,6 +225,9 @@ class TermCraftStudioApp(App):
         self.profiler = ShellProfiler()
         self.tool_hub = ToolHub()
         self.backup_mgr = BackupManager()
+        # temayi burada kaydetmek zorundayiz: CSS'teki $tc-* degiskenleri aktif
+        # Theme'den geliyor ve stylesheet mount'tan once cozuluyor
+        self._set_ui_theme(self.selected_theme)
 
     def compose(self) -> ComposeResult:
         # sekmeler: tema / prompt / alias / doctor / benchmark / araclar / yedek / dil
@@ -254,6 +335,9 @@ class TermCraftStudioApp(App):
     def on_select_changed(self, event: Select.Changed) -> None:
         if event.select.id == "theme-selector" and event.value is not None:
             self.selected_theme = str(event.value)
+            # stüdyonun kendi renkleri de secilen temaya donsun -> temayi
+            # uygulamadan once tam olarak neye benzeyecegini goruyorsun
+            self._set_ui_theme(self.selected_theme)
         elif event.select.id == "prompt-selector" and event.value is not None:
             self.selected_prompt = str(event.value)
         elif event.select.id == "lang-selector" and event.value is not None:

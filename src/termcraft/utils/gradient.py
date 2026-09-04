@@ -32,6 +32,66 @@ def interpolate_color(color1: Tuple[int, int, int], color2: Tuple[int, int, int]
     b = int(color1[2] + (color2[2] - color1[2]) * factor)
     return max(0, min(255, r)), max(0, min(255, g)), max(0, min(255, b))
 
+def relative_luminance(hex_code: str) -> float:
+    """0.0 (siyah) - 1.0 (beyaz). Bir rengin uzerine siyah mi beyaz mi yazacagimiza karar veriyor."""
+    r, g, b = hex_to_rgb(hex_code)
+    # WCAG'in basitlestirilmis hali, gamma duzeltmesi olmadan da karar icin yeterli
+    return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255.0
+
+
+def is_dark(hex_code: str) -> bool:
+    return relative_luminance(hex_code) < 0.5
+
+
+def mix_hex(base: str, other: str, factor: float) -> str:
+    """base rengini other'a dogru factor kadar (0..1) karistirir."""
+    factor = max(0.0, min(1.0, factor))
+    return rgb_to_hex(*interpolate_color(hex_to_rgb(base), hex_to_rgb(other), factor))
+
+
+def readable_on(background: str) -> str:
+    """Verilen zemin uzerinde okunur bir metin rengi (siyah ya da beyaz)."""
+    return "#000000" if not is_dark(background) else "#ffffff"
+
+
+def _linear_channel(value: int) -> float:
+    c = value / 255.0
+    return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+
+
+def wcag_luminance(hex_code: str) -> float:
+    """WCAG'in gamma duzeltilmis bagil parlakligi. contrast_ratio icin gerekli."""
+    r, g, b = (_linear_channel(v) for v in hex_to_rgb(hex_code))
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def contrast_ratio(a: str, b: str) -> float:
+    """1.0 (ayni renk) - 21.0 (siyah/beyaz) arasi WCAG kontrast orani."""
+    la, lb = wcag_luminance(a), wcag_luminance(b)
+    lighter, darker = max(la, lb), min(la, lb)
+    return (lighter + 0.05) / (darker + 0.05)
+
+
+def ensure_contrast(color: str, background: str, min_ratio: float = 4.5) -> str:
+    """Rengi zeminden yeterince ayrilana kadar koyulastirir ya da aydinlatir.
+
+    Tema paletleri bizim UI zeminlerimiz dusunulerek yapilmiyor; acik temalarda
+    (catppuccin-latte) aksan rengi panel uzerinde okunmuyordu. Rengin tonunu
+    koruyup sadece parlakligini kaydiriyoruz.
+    """
+    if contrast_ratio(color, background) >= min_ratio:
+        return color
+    # zemin acikse rengi siyaha, koyuysa beyaza dogru kaydir
+    target = "#000000" if wcag_luminance(background) > 0.5 else "#ffffff"
+    best = color
+    for step in range(1, 21):
+        candidate = mix_hex(color, target, step * 0.05)
+        best = candidate
+        if contrast_ratio(candidate, background) >= min_ratio:
+            break
+    return best
+
+
 def get_gradient_palette(color_stops: List[str], steps: int) -> List[str]:
     # n tane renk durağindan steps kadar ara renk uret.
     # t'yi segmentlere bolup her segment icinde 0..1 arasina yeniden olcekliyoruz

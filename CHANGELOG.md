@@ -55,8 +55,24 @@ First public release. This entry also records the hardening pass done before pub
 - Snapshots sort by their manifest timestamp instead of directory name (which sorted by tag first).
 - Output is no longer forced to ANSI when stdout is a pipe.
 - Unix font scanning recurses into subdirectories.
+- Fish alias escaping: fish expands `$` inside double quotes, so `alias h "echo $HOME"` was frozen
+  at definition time instead of expanding at call time the way the bash version does. `\`, `"` and
+  `$` are now escaped.
+- Removed three comment blocks that still described already-fixed bugs (the rival-gradient
+  duplicate, missing backups in `inject_block`, and the version living in three places).
 
 ### Added
+
+- **The studio now wears the theme you select.** Picking a palette recolors the whole TUI, not
+  just the preview card, by building a Textual `Theme` from the palette so built-in widgets
+  (tabs, footer, dropdowns) follow too. Light palettes like `catppuccin-latte` used to leave the
+  tab labels and footer unreadable.
+- `ensure_contrast()` / `contrast_ratio()` colour utilities — accent colours are shifted until
+  they clear a WCAG threshold against the panel behind them, with a test asserting every built-in
+  theme stays readable as UI chrome.
+- `scripts/make_screenshots.py` — generates the README screenshots via Textual's SVG export in a
+  throwaway `HOME`.
+- README screenshots of the studio (dark + light themes, doctor, tools, Turkish UI).
 
 - `termcraft uninstall` — removes the TermCraft block from every shell profile.
 - `--requires` flag on `alias add`.

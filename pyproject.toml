@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 authors = [
-    { name = "Rival Development" }
+    { name = "Rival Development - imp0rt" }
 ]
 keywords = [
     "terminal",
@@ -68,9 +68,9 @@ termcraft = "termcraft.cli:main"
 tc = "termcraft.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/imp0rt/termcraft"
-Repository = "https://github.com/imp0rt/termcraft"
-Issues = "https://github.com/imp0rt/termcraft/issues"
+Homepage = "https://github.com/adaz-tr/termcraft"
+Repository = "https://github.com/adaz-tr/termcraft"
+Issues = "https://github.com/adaz-tr/termcraft/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/termcraft"]

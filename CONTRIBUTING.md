@@ -5,7 +5,7 @@ Thanks for wanting to help out.
 ## Development setup
 
 ```bash
-git clone https://github.com/imp0rt/termcraft.git
+git clone https://github.com/adaz-tr/termcraft.git
 cd termcraft
 
 python -m venv .venv
@@ -59,12 +59,29 @@ src/termcraft/
 entirely, so calling it with a partial script wipes the rest. If you need to add something to the
 block, add it to `sync_all_shells` (there is an `extra_env` parameter for exactly this).
 
+## Screenshots
+
+README images are generated, not hand-captured:
+
+```bash
+python scripts/make_screenshots.py
+```
+
+It writes SVGs to `docs/images/` using Textual's own export, driving the app in a temp `HOME`
+so your real config is untouched. Regenerate them whenever the TUI layout changes.
+
 ## Adding a theme
 
 Add an entry to `BUILTIN_THEMES` in `src/termcraft/presets/themes.py` with the standard keys
 (`background`, `foreground`, `cursor`, `selection`, the 8 ANSI colors and their `bright*` variants).
 Then add a matching entry to `BAT_THEME_MAP` in the same file — there is a test that fails if a
 theme has no `bat` mapping.
+
+The studio recolors itself to match the selected theme, so a new palette also has to stay
+readable as UI chrome. `test_studio_ui_is_readable_for_every_builtin_theme` checks the WCAG
+contrast of the header, footer, body text and button labels for every built-in theme. Accent
+colors are auto-corrected by `ensure_contrast()` when they are too close to the panel behind
+them, but a palette with, say, near-identical `background` and `foreground` will still fail.
 
 Gradient themes also need `is_gradient: True`, a `gradient_stops` list, and an entry in
 `GRADIENT_PALETTES` in `src/termcraft/utils/gradient.py` if you want the preview to use its own colors.

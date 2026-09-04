@@ -5,7 +5,7 @@
 ### *Universal Terminal & CLI Customization, Theming, Profiling and Management Suite*
 ### *Evrensel Terminal ve Kabuk Özelleştirme, Tema, Hız Analizi ve Yönetim Paketi*
 
-[![CI](https://github.com/imp0rt/termcraft/actions/workflows/ci.yml/badge.svg)](https://github.com/imp0rt/termcraft/actions/workflows/ci.yml)
+[![CI](https://github.com/adaz-tr/termcraft/actions/workflows/ci.yml/badge.svg)](https://github.com/adaz-tr/termcraft/actions/workflows/ci.yml)
 [![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue?style=flat-square&logo=python)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey?style=flat-square)](#-supported-shells--terminals)
@@ -21,6 +21,8 @@
 ```
 
 **TermCraft** turns a plain command line into a fast, consistent, fully themed developer cockpit — the same colors, aliases and prompt across every shell and terminal emulator you use.
+
+<img src="docs/images/studio-themes-rival.svg" alt="TermCraft Studio - Themes tab with the Rival Magenta Gradient theme" width="900">
 
 [Features](#-key-features) • [Installation](#-installation) • [Quick Start](#-quick-start) • [Studio](#-interactive-tui-studio) • [CLI Reference](#-cli-reference) • [Türkçe](#-türkçe-kullanım-rehberi)
 
@@ -76,13 +78,13 @@ pip install termcraft
 
 ### From source
 ```bash
-git clone https://github.com/imp0rt/termcraft.git
+git clone https://github.com/adaz-tr/termcraft.git
 cd termcraft
 pip install -e .
 ```
 
 ### Standalone binary
-Grab `termcraft-<platform>` from the [Releases](https://github.com/imp0rt/termcraft/releases) page — no Python required.
+Grab `termcraft-<platform>` from the [Releases](https://github.com/adaz-tr/termcraft/releases) page — no Python required.
 
 ---
 
@@ -127,6 +129,34 @@ termcraft studio    # or: tc studio
 | 🌐 Language | Switch Türkçe ↔ English instantly |
 
 Long-running work (diagnostics, benchmarks, theme apply) runs on background workers, so the UI never freezes. `q` quits, `r` refreshes.
+
+### The studio wears the theme you pick
+
+Selecting a theme recolors the studio itself, not just the preview card — so you see exactly what you are about to apply. Light palettes are handled properly: accent colors are shifted until they meet a WCAG contrast threshold against the panel behind them, so nothing becomes unreadable.
+
+<table>
+<tr>
+<td width="50%"><img src="docs/images/studio-themes-rival.svg" alt="Rival Magenta Gradient - a dark theme"></td>
+<td width="50%"><img src="docs/images/studio-themes-latte.svg" alt="Catppuccin Latte - a light theme"></td>
+</tr>
+<tr>
+<td align="center"><code>rival-gradient</code></td>
+<td align="center"><code>catppuccin-latte</code></td>
+</tr>
+</table>
+
+### Doctor & Tools
+
+<table>
+<tr>
+<td width="50%"><img src="docs/images/studio-doctor.svg" alt="Doctor tab showing environment diagnostics"></td>
+<td width="50%"><img src="docs/images/studio-tools.svg" alt="Tools tab showing installed and missing CLI tools"></td>
+</tr>
+<tr>
+<td align="center">Diagnostics with pass/warn/info rows</td>
+<td align="center">Installed vs missing tools, with install commands</td>
+</tr>
+</table>
 
 ---
 
@@ -245,6 +275,8 @@ termcraft backup list
 termcraft backup restore kurulumum
 ```
 
+<img src="docs/images/studio-themes-tr.svg" alt="TermCraft Studio Türkçe arayüz" width="900">
+
 Tüm çıktılar, tanı raporları ve TUI arayüzü Türkçe'ye çevrilidir. Dili değiştirdiğinizde alias açıklamaları da o dilde yeniden üretilir.
 
 **Güvenlik notu:** TermCraft kabuk profillerinize yazarken sadece kendi işaretli bloğunu değiştirir, sizin satırlarınıza dokunmaz. Tema ve prompt uygulamadan önce otomatik yedek alır. `ls`, `cd`, `cat` gibi temel komutları ezen kısayollar varsayılan olarak kurulmaz; kurulsalar bile ilgili araç sisteminizde yoksa kabuk profiline yazılmaz.
@@ -263,6 +295,6 @@ MIT — see [LICENSE](LICENSE).
 
 <div align="center">
 
-**Rival Development** — by imp0rt
+**Rival Development - imp0rt**
 
 </div>
