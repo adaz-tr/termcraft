@@ -2,6 +2,8 @@ import re
 from typing import Dict, List, Optional
 from pydantic import BaseModel, Field, field_validator
 
+from termcraft import __version__
+
 # alias adi kabuk dosyasina duz satir olarak yazildigi icin sadece "zararsiz"
 # karakterlere izin veriyoruz. bosluk, noktali virgul, tirnak vs. kabul yok
 ALIAS_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_\-\.]*$")
@@ -50,7 +52,9 @@ class ProfileConfig(BaseModel):
 class TermCraftConfig(BaseModel):
     # ~/.termcraft/config.yaml'in semasi. pydantic sayesinde yaml'i dogrudan
     # model_validate ile okuyup yaziyoruz, elle parse yok
-    version: str = "1.0.0"
+    # yazildigi andaki termcraft surumu. ileride sema degisirse gecis
+    # yapabilmek icin duruyor, elle guncellenmiyor
+    version: str = __version__
     lang: str = "tr"
     active_profile: str = "default"
     theme: ThemeSettings = Field(default_factory=ThemeSettings)

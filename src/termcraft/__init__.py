@@ -1,4 +1,4 @@
-# TODO: surum uc yerde ayri ayri yaziyor (burada, pyproject.toml ve config.py).
-# hatchling'in dynamic version'ina baglayip tek kaynaga indirmek lazim
+# surumun tek kaynagi. pyproject.toml bunu [tool.hatch.version] ile okuyor,
+# config semasi da varsayilan olarak buradan aliyor -> tek yerde guncelle
 __version__ = "1.0.0"
 __app_name__ = "termcraft"

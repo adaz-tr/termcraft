@@ -17,14 +17,22 @@ class FishAdapter(BaseShellAdapter):
         return get_fish_config_path()
 
     def generate_alias_script(self, aliases: List[AliasDefinition]) -> str:
-        # fish'te tek tirnak escape kabul etmiyor, o yuzden cift tirnak + \" kacisi.
-        # TODO: $ ve ters slash kacirilmiyor, komutta gecerse fish genisletir
+        # fish'te tek tirnak escape kabul etmiyor, mecburen cift tirnak.
+        # cift tirnak icinde fish sadece su ucunu ozel sayiyor: \ " $
+        # ucunu de kaciriyoruz (ters slash ONCE, yoksa kendi kacislarimizi bozar).
+        # $ ozellikle onemli: kacirmazsak `alias h "echo $HOME"` tanimlama aninda
+        # genisliyor ve deger donuyor. bash'te tek tirnak kullandigimiz icin orada
+        # calisma aninda genisliyor - fish'in de ayni sekilde davranmasi lazim
         lines: List[str] = []
         for alias in aliases:
             if self.name in alias.shells:
                 safe_name = alias.name.strip()
-                cmd = alias.command.strip()
-                escaped_cmd = cmd.replace('"', '\\"')
+                escaped_cmd = (
+                    alias.command.strip()
+                    .replace("\\", "\\\\")
+                    .replace('"', '\\"')
+                    .replace("$", "\\$")
+                )
                 lines.append(f'alias {safe_name} "{escaped_cmd}"')
         return "\n".join(lines)
 

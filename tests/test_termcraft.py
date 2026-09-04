@@ -281,6 +281,27 @@ def test_unified_script_generation():
     assert "starship" in script
 
 
+def test_fish_alias_escapes_dollar_and_backslash():
+    """fish cift tirnak icinde $ genisletiyor.
+
+    Kacirmazsak `alias h "echo $HOME"` tanimlama aninda cozuluyordu; bash'te
+    tek tirnak kullandigimiz icin orada calisma aninda cozuluyor. Ikisi ayni
+    davranmali.
+    """
+    script = FishAdapter().generate_alias_script([AliasDefinition(name="h", command="echo $HOME")])
+    assert script == r'alias h "echo \$HOME"'
+
+    # ters slash iki katlanmali (docker --format {{.ID}}\t{{.Names}} gibi komutlar icin),
+    # fish cift tirnagi cozunce docker yine tek ters slash goruyor
+    tabbed = [AliasDefinition(name="dps", command=r"docker ps --format {{.ID}}\t{{.Names}}")]
+    out = FishAdapter().generate_alias_script(tabbed)
+    assert r"\\t" in out
+
+    # cift tirnak da kacirilmali
+    quoted = FishAdapter().generate_alias_script([AliasDefinition(name="q", command='echo "hi"')])
+    assert quoted == r'alias q "echo \"hi\""'
+
+
 def test_powershell_no_duplicate_prompt_in_env():
     assert "function prompt" not in PowerShellAdapter().generate_env_script({"TEST_ENV": "1"})
 

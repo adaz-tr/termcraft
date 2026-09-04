@@ -547,9 +547,8 @@ BUILTIN_THEMES: Dict[str, Dict[str, Any]] = {
         "brightCyan": "#93a1a1",
         "brightWhite": "#fdf6e3",
     },
-    # TODO: bu tema cyber-gradient ile birebir ayni (adi bile ayni: Cyber Neon Gradient).
-    # ustelik gradient onizleme/palet listelerinde adi gecmedigi icin gradient
-    # ozelliklerinden de faydalanamiyor. ya silinmeli ya kendine ait renkleri olmali
+    # projenin imza temasi. gradient_stops'u GRADIENT_PALETTES'te de kayitli,
+    # o yuzden onizleme kendi renkleriyle cizilir
     "rival-gradient": {
         "name": "Rival Magenta Gradient",
         "author": "Rival Development",

@@ -70,9 +70,15 @@ class BaseShellAdapter(ABC):
         return ""
 
     # blok zaten varsa yerinde degistir, yoksa dosyanin sonuna ekle.
-    # TODO: yazmadan once yedek alinmiyor. auto_backup ayari da bosta duruyor
-    # TODO: bu metot bloğu komple eziyor -> kismi guncelleme yapan cagirilar
-    # (mesela doctor.auto_fix) farkinda olmadan alias/prompt'u siliyor
+    #
+    # SOZLESME: bu metot marker'lar arasindaki her seyi ATAR ve content ile
+    # degistirir. yani kismi bir script ile cagirmak (sadece env, sadece alias)
+    # geri kalanini siler. doctor.auto_fix bir zamanlar tam bunu yapiyordu ve
+    # kullanicinin butun alias'larini ucuruyordu.
+    # kural: profile yazan her sey sync_all_shells() uzerinden gecmeli, orasi
+    # blogu butun halinde yeniden uretiyor. bloga bir sey eklemen gerekiyorsa
+    # sync_all_shells'in extra_env parametresini kullan.
+    # yedekleme cagiran tarafta: theme/prompt uygulamalari once maybe_snapshot()
     def inject_block(self, content: str) -> bool:
         path = self.get_config_path()
         if not path:
