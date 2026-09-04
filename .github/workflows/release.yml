@@ -1,0 +1,98 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-binaries:
+    name: Build ${{ matrix.asset_name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            asset_name: termcraft-windows-amd64.exe
+            binary: dist/termcraft.exe
+          - os: ubuntu-latest
+            asset_name: termcraft-linux-x86_64
+            binary: dist/termcraft
+          - os: macos-latest
+            asset_name: termcraft-macos-arm64
+            binary: dist/termcraft
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies & PyInstaller
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install -e .
+
+      # textual kendi CSS/widget kaynaklarini paket icinde tasiyor, collect-all
+      # olmadan onefile binary TUI acilirken patliyor
+      - name: Build single-file executable
+        run: >
+          pyinstaller --onefile --name termcraft
+          --collect-all textual
+          --collect-all rich
+          --hidden-import termcraft.tui.app
+          src/termcraft/cli.py
+
+      # her platform ayni ismi (termcraft / termcraft.exe) uretiyor, ayni
+      # release'e yuklenince birbirini eziyorlardi. platform adiyla yeniden adlandir
+      - name: Rename artifact
+        shell: bash
+        run: mv "${{ matrix.binary }}" "dist/${{ matrix.asset_name }}"
+
+      - name: Smoke test the binary
+        shell: bash
+        run: ./dist/${{ matrix.asset_name }} --version
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: dist/${{ matrix.asset_name }}
+
+  publish:
+    name: Publish GitHub Release
+    needs: build-binaries
+    runs-on: ubuntu-latest
+    # softprops/action-gh-release release olusturmak icin yazma izni istiyor,
+    # varsayilan GITHUB_TOKEN cogu repoda salt-okunur
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build wheel & sdist
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: binaries
+          merge-multiple: true
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            binaries/*
+            dist/*.whl
+            dist/*.tar.gz

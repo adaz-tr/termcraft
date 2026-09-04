@@ -1,0 +1,19 @@
+# depoda her sey LF, checkout'ta platforma birakiyoruz
+* text=auto eol=lf
+
+*.py    text eol=lf
+*.md    text eol=lf
+*.toml  text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.sh    text eol=lf
+*.lua   text eol=lf
+*.nu    text eol=lf
+
+# powershell 5.1 CRLF'i daha sorunsuz sindiriyor
+*.ps1   text eol=crlf
+
+*.png   binary
+*.jpg   binary
+*.gif   binary
+*.ico   binary

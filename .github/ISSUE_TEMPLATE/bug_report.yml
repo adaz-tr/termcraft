@@ -1,0 +1,34 @@
+name: Bug Report
+description: File a bug report for TermCraft
+title: "[BUG]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to report an issue!
+  - type: input
+    id: os_version
+    attributes:
+      label: Operating System
+      placeholder: e.g. Windows 11, macOS Sonoma, Ubuntu 24.04
+    validations:
+      required: true
+  - type: input
+    id: shell_version
+    attributes:
+      label: Shell & Version
+      placeholder: e.g. PowerShell 7.4, Zsh 5.9, Bash 5.2
+    validations:
+      required: true
+  - type: textarea
+    id: what_happened
+    attributes:
+      label: What happened?
+      description: Tell us what you were trying to do and what occurred instead.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Command Output / Traceback
+      render: shell
